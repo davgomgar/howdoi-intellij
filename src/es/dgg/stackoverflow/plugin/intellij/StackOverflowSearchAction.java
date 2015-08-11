@@ -3,10 +3,13 @@ package es.dgg.stackoverflow.plugin.intellij;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import es.dgg.howdoi.HowDoI;
+import es.dgg.howdoi.QueryStringGenerator;
 import es.dgg.howdoi.google.GoogleQueryStringGenerator;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -17,7 +20,8 @@ import java.util.Optional;
 import java.util.concurrent.*;
 
 /**
- * Created by david on 6/8/15.
+ * StackOverflowSearchAction - Performs a search in Stack Overflow and pastes the results of the search in the active
+ * editor.
  */
 public class StackOverflowSearchAction extends AnAction {
     
@@ -52,25 +56,27 @@ public class StackOverflowSearchAction extends AnAction {
     }
 
     public void actionPerformed(AnActionEvent anActionEvent) {
-        //Get all the required data from data keys
         final Editor editor = anActionEvent.getRequiredData(CommonDataKeys.EDITOR);
         final Project project = anActionEvent.getRequiredData(CommonDataKeys.PROJECT);
-        //Access document, caret, and selection
         final Document document = editor.getDocument();
         CaretModel caretModel = editor.getCaretModel();
+        PsiFile psiFile = anActionEvent.getData(LangDataKeys.PSI_FILE);
+        String language = psiFile.getLanguage().getDisplayName();
         SelectionModel selectionModel = editor.getSelectionModel();
-        caretModel.runForEachCaret(caret -> runTaskForCaret(caret, selectionModel, document, project));
+        caretModel.runForEachCaret(caret -> runTaskForCaret(caret, selectionModel, document, project, language));
     }
 
-    private void runTaskForCaret(Caret caret, SelectionModel selectionModel, final Document document, Project project) {
+    private void runTaskForCaret(Caret caret, SelectionModel selectionModel, final Document document, Project project,
+                                 String language) {
         logger.debug("Start of Task for caret '{}'", caret);
         caret.selectLineAtCaret();
-        String textAtCaret = caret.getSelectedText();
+        String searchText = caret.getSelectedText();
         final int start = selectionModel.getSelectionStart();
         final int end = selectionModel.getSelectionEnd();
         try {
-            if (StringUtils.isNotEmpty(textAtCaret)) {
-                Callable<Optional<String>> callable = () -> fetchStackOverflowResult(textAtCaret);
+            if (StringUtils.isNotEmpty(searchText)) {
+                String contextSensitiveSearch = searchText.concat(" ").concat(language);
+                Callable<Optional<String>> callable = () -> fetchStackOverflowResult(contextSensitiveSearch);
                 Future<Optional<String>> submit = pool.submit(callable);
                 Optional<String> retrievedValue = submit.get();
                 Runnable runnable = () -> document.replaceString(start, end, retrievedValue.get());
@@ -84,12 +90,16 @@ public class StackOverflowSearchAction extends AnAction {
     }
 
     private Optional<String> fetchStackOverflowResult(final String text) {
-        String sanitizedText = text.replaceAll("\\?", "");
-        GoogleQueryStringGenerator generator = new GoogleQueryStringGenerator();
+        String sanitizedText = sanitizesInput(text);
+        QueryStringGenerator generator = new GoogleQueryStringGenerator();
         try {
             return new HowDoI(sanitizedText, generator).getAnswer();
         } catch (IOException e) {
             return Optional.empty();
         }
+    }
+
+    private String sanitizesInput(String text) {
+        return text.replaceAll("\\?", "").replaceAll("\\n", "");
     }
 }

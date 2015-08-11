@@ -39,7 +39,7 @@
   <actions>
     <!-- Add your actions here -->
     <action id="stackOverflowSearch" class="es.dgg.stackoverflow.plugin.intellij.StackOverflowSearchAction"
-            text="Search Stack Overflow"
+            text="Search Stack Overflow" icon="/stackoverflow.png"
             description="Search in StackOverflow">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl meta alt S"/>
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
