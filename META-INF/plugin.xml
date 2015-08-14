@@ -1,17 +1,20 @@
 <idea-plugin version="2">
-  <id>com.yourcompany.unique.plugin.id</id>
-  <name>Plugin display name here</name>
+  <id>es.dgg.howdoi.intellij</id>
+  <name>Stack Overflow Autopaste Plugin</name>
   <version>1.0</version>
-  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+  <vendor email="davgomgar@gmail.com">David Gomez</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <em>most HTML tags may be used</em>
+      Make searchs on <em>Stack Overflow</em> and paste code automatically on your editor<br>
     ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>
+      First version. Current features: <br/>
+      <ul>
+          <li>Give results filtered for the programming language used in the editor</li>
+          <li>Use of multiple carets to  make multiple queries all at once</li>
+      </ul>
+
     ]]>
   </change-notes>
 
