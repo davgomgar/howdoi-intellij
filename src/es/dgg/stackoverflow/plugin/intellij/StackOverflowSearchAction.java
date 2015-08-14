@@ -42,17 +42,18 @@ public class StackOverflowSearchAction extends AnAction {
     }
 
     private boolean anyCaretHasText(CaretModel caretModel) {
-        boolean result = false;
-        for (Caret caret : caretModel.getAllCarets()) {
-            caret.selectLineAtCaret();
-            String text = caret.getSelectedText().trim();
-            caret.removeSelection();
-            if (StringUtils.isNotEmpty(text)) {
-                result = true;
-                break;
-            }
+       return caretModel.getAllCarets().stream().anyMatch(this::caretHasText);
+    }
+
+    private boolean caretHasText(Caret caret) {
+        boolean isNotEmptyCaret = false;
+        caret.selectLineAtCaret();
+        String textAtCaret = caret.getSelectedText();
+        if (textAtCaret != null) {
+            isNotEmptyCaret =  StringUtils.isNotBlank(textAtCaret);
         }
-        return result;
+        caret.removeSelection();
+        return isNotEmptyCaret;
     }
 
     public void actionPerformed(AnActionEvent anActionEvent) {
@@ -74,12 +75,13 @@ public class StackOverflowSearchAction extends AnAction {
         final int start = selectionModel.getSelectionStart();
         final int end = selectionModel.getSelectionEnd();
         try {
-            if (StringUtils.isNotEmpty(searchText)) {
+
+            if (StringUtils.isNotBlank(sanitizesInput(searchText))) {
                 String contextSensitiveSearch = searchText.concat(" ").concat(language);
                 Callable<Optional<String>> callable = () -> fetchStackOverflowResult(contextSensitiveSearch);
                 Future<Optional<String>> submit = pool.submit(callable);
                 Optional<String> retrievedValue = submit.get();
-                Runnable runnable = () -> document.replaceString(start, end, retrievedValue.get());
+                Runnable runnable = () -> document.replaceString(start, end, retrievedValue.get().concat("\n"));
                 WriteCommandAction.runWriteCommandAction(project, runnable);
                 selectionModel.removeSelection();
             }
@@ -100,6 +102,6 @@ public class StackOverflowSearchAction extends AnAction {
     }
 
     private String sanitizesInput(String text) {
-        return text.replaceAll("\\?", "").replaceAll("\\n", "");
+        return (text) != null ? text.replaceAll("\\?", "").replaceAll("\\n", "") : StringUtils.EMPTY;
     }
 }
