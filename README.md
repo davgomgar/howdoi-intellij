@@ -9,7 +9,7 @@ cursor (IDEA supports multiple caret since version 13.1)
 ##Screenshots
 ![Same search different languages](http://i.imgur.com/PhfuBVR.gif)
 
-![Java examples]()
+![Java examples](http://i.imgur.com/pqCWfZi.gif)
 
 A compiled version ready to install can be found inside build directory
 
